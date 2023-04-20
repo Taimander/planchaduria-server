@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentType {
+  CASH
+  CARD
+  TRANSFER
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELED
+}
+
+model Admin {
+  admin_id  String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Employee {
+  employee_id String   @id @default(uuid())
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders Order[]
+}
+
+model Client {
+  client_id String   @id @default(uuid())
+  name      String
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
+}
+
+model Service {
+  service_id String   @id @default(uuid())
+  name       String
+  price      Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  orderServices OrderService[]
+}
+
+model OrderService {
+  orderService_id String   @id @default(uuid())
+  order           Order    @relation(fields: [orderId], references: [order_id])
+  orderId         String
+  service         Service  @relation(fields: [serviceId], references: [service_id])
+  serviceId       String
+  quantity        Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Label {
+  label_id  String   @id @default(uuid())
+  orderId   String
+  folio     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [order_id])
+}
+
+model Order {
+  order_id   String   @id @default(uuid())
+  client     Client   @relation(fields: [clientId], references: [client_id])
+  clientId   String
+  employee   Employee @relation(fields: [employeeId], references: [employee_id])
+  employeeId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  paymentType PaymentType @default(CASH)
+  total       Float
+  status      OrderStatus @default(PENDING)
+
+  labels        Label[]
+  orderServices OrderService[]
+}
